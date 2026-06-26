@@ -3,6 +3,7 @@ using Checkout.Worker.Activities;
 using Checkout.Worker.Workflows;
 using Microsoft.Extensions.Hosting;
 using ShoppingBasket.StandardDefaults;
+using Temporalio.Client;
 using Temporalio.Extensions.Hosting;
 
 var builder = Host.CreateApplicationBuilder(args);
@@ -10,6 +11,12 @@ var builder = Host.CreateApplicationBuilder(args);
 builder.AddServiceDefaults();
 
 var temporalAddress = builder.Configuration["Temporal:Address"] ?? "localhost:7233";
+
+builder.Services.AddTemporalClient(options =>
+{
+    options.TargetHost = temporalAddress;
+    options.Namespace = "storefront";
+});
 
 builder.Services.AddHostedTemporalWorker(
     clientTargetHost: temporalAddress,
