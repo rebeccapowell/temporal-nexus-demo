@@ -1,0 +1,12 @@
+<Solution>
+  <Project Path="src\ShoppingBasket.AppHost\ShoppingBasket.AppHost.csproj" />
+  <Project Path="src\ShoppingBasket.StandardDefaults\ShoppingBasket.StandardDefaults.csproj" />
+  <Project Path="src\ShoppingBasket.Contracts\ShoppingBasket.Contracts.csproj" />
+  <Project Path="src\ShoppingBasket.NexusContracts\ShoppingBasket.NexusContracts.csproj" />
+  <Project Path="src\Storefront.Api\Storefront.Api.csproj" />
+  <Project Path="src\PurchaseIntent.Worker\PurchaseIntent.Worker.csproj" />
+  <Project Path="src\Checkout.Worker\Checkout.Worker.csproj" />
+  <Project Path="src\Inventory.Worker\Inventory.Worker.csproj" />
+  <Project Path="src\Payment.Worker\Payment.Worker.csproj" />
+  <Project Path="src\Fulfillment.Worker\Fulfillment.Worker.csproj" />
+</Solution>

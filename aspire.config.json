@@ -1,0 +1,23 @@
+{
+  "appHost": {
+    "path": "src/ShoppingBasket.AppHost/ShoppingBasket.AppHost.csproj",
+    "language": "csharp"
+  },
+  "profiles": {
+    "https": {
+      "applicationUrl": "https://localhost:17173;http://localhost:15245",
+      "environmentVariables": {
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "https://localhost:21000",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "https://localhost:22182"
+      }
+    },
+    "http": {
+      "applicationUrl": "http://localhost:15245",
+      "environmentVariables": {
+        "ASPIRE_DASHBOARD_OTLP_ENDPOINT_URL": "http://localhost:19153",
+        "ASPIRE_RESOURCE_SERVICE_ENDPOINT_URL": "http://localhost:20156",
+        "ASPIRE_ALLOW_UNSECURED_TRANSPORT": "true"
+      }
+    }
+  }
+}

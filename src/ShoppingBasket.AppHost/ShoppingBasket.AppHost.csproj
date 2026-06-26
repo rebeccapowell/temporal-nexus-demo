@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Sdk Name="Aspire.AppHost.Sdk" Version="13.4.6" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>ShoppingBasket.AppHost</RootNamespace>
+    <UserSecretsId>shopping-basket-apphost</UserSecretsId>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="InfinityFlow.Aspire.Temporal" Version="1.0.2" />
+    <PackageReference Include="CommunityToolkit.Aspire.Hosting.MailPit" Version="13.4.0" />
+    <PackageReference Include="Aspire.Hosting.NodeJs" Version="9.5.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ShoppingBasket.StandardDefaults\ShoppingBasket.StandardDefaults.csproj" IsAspireProjectResource="false" />
+    <ProjectReference Include="..\Storefront.Api\Storefront.Api.csproj" />
+    <ProjectReference Include="..\PurchaseIntent.Worker\PurchaseIntent.Worker.csproj" />
+    <ProjectReference Include="..\Checkout.Worker\Checkout.Worker.csproj" />
+    <ProjectReference Include="..\Inventory.Worker\Inventory.Worker.csproj" />
+    <ProjectReference Include="..\Payment.Worker\Payment.Worker.csproj" />
+    <ProjectReference Include="..\Fulfillment.Worker\Fulfillment.Worker.csproj" />
+  </ItemGroup>
+
+</Project>
