@@ -2,7 +2,6 @@ using Checkout.Worker.Activities;
 using Microsoft.Extensions.Logging;
 using ShoppingBasket.Contracts;
 using ShoppingBasket.NexusContracts;
-using Temporalio.Activities;
 using Temporalio.Workflows;
 
 namespace Checkout.Worker.Workflows;
@@ -32,6 +31,10 @@ public class CheckoutWorkflow
         {
             _status = CheckoutStatus.Cancelled;
             Workflow.Logger.LogInformation("Checkout {CheckoutId} cancelled or timed out", input.CheckoutId);
+            await Workflow.ExecuteActivityAsync(
+                (CheckoutActivities a) => a.NotifyPurchaseIntentCheckoutFailedAsync(
+                    input.PurchaseIntentId, input.CheckoutId, "Checkout was cancelled or timed out."),
+                new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(1) });
             return;
         }
 
@@ -50,6 +53,11 @@ public class CheckoutWorkflow
             _status = CheckoutStatus.Failed;
             _failureReason = inventoryResult.FailureReason ?? "Inventory reservation failed.";
             Workflow.Logger.LogWarning("Inventory failed for {CheckoutId}: {Reason}", input.CheckoutId, _failureReason);
+            var inventoryFailReason = _failureReason;
+            await Workflow.ExecuteActivityAsync(
+                (CheckoutActivities a) => a.NotifyPurchaseIntentCheckoutFailedAsync(
+                    input.PurchaseIntentId, input.CheckoutId, inventoryFailReason),
+                new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(1) });
             return;
         }
 
@@ -57,21 +65,38 @@ public class CheckoutWorkflow
         var paymentClient = Workflow.CreateNexusWorkflowClient<IPaymentNexusService>("payment-service");
 
         AuthorizePaymentOutput paymentResult;
-        do
+        while (true)
         {
             _retryPayment = false;
             paymentResult = await paymentClient.ExecuteNexusOperationAsync(
                 service => service.AuthorizePayment(
                     new AuthorizePaymentInput(input.CheckoutId, totalAmount, paymentSnapshot)),
                 new NexusWorkflowOperationOptions { ScheduleToCloseTimeout = TimeSpan.FromMinutes(5) });
-        }
-        while (!paymentResult.Success && _retryPayment);
 
-        if (!paymentResult.Success)
-        {
-            _status = CheckoutStatus.Failed;
+            if (paymentResult.Success) break;
+
+            _status = CheckoutStatus.PaymentDeclined;
             _failureReason = paymentResult.FailureReason ?? "Payment authorization failed.";
-            return;
+            Workflow.Logger.LogWarning("Payment declined for {CheckoutId}: {Reason}", input.CheckoutId, _failureReason);
+
+            // Wait up to 30 minutes for the user to retry or cancel.
+            var shouldContinue = await Workflow.WaitConditionAsync(
+                () => _retryPayment || _cancelled,
+                timeout: TimeSpan.FromMinutes(30));
+
+            if (!shouldContinue || _cancelled)
+            {
+                _status = CheckoutStatus.Failed;
+                var paymentFailReason = _failureReason;
+                await Workflow.ExecuteActivityAsync(
+                    (CheckoutActivities a) => a.NotifyPurchaseIntentCheckoutFailedAsync(
+                        input.PurchaseIntentId, input.CheckoutId, paymentFailReason),
+                    new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(1) });
+                return;
+            }
+
+            _failureReason = null;
+            _status = CheckoutStatus.ProcessingPayment;
         }
 
         _status = CheckoutStatus.ProcessingFulfillment;
@@ -85,6 +110,11 @@ public class CheckoutWorkflow
         {
             _status = CheckoutStatus.Failed;
             _failureReason = fulfillmentResult.FailureReason ?? "Fulfillment request failed.";
+            var fulfillFailReason = _failureReason;
+            await Workflow.ExecuteActivityAsync(
+                (CheckoutActivities a) => a.NotifyPurchaseIntentCheckoutFailedAsync(
+                    input.PurchaseIntentId, input.CheckoutId, fulfillFailReason),
+                new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(1) });
             return;
         }
 
@@ -97,6 +127,11 @@ public class CheckoutWorkflow
 
         _status = CheckoutStatus.Completed;
         Workflow.Logger.LogInformation("Checkout completed: {CheckoutId}", input.CheckoutId);
+
+        await Workflow.ExecuteActivityAsync(
+            (CheckoutActivities a) => a.NotifyPurchaseIntentCheckoutCompletedAsync(
+                input.PurchaseIntentId, input.CheckoutId),
+            new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(1) });
     }
 
     [WorkflowQuery]

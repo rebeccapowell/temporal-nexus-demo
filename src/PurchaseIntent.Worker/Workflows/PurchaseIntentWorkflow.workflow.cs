@@ -1,5 +1,6 @@
 using ShoppingBasket.Contracts;
 using Microsoft.Extensions.Logging;
+using PurchaseIntent.Worker.Activities;
 using Temporalio.Workflows;
 
 namespace PurchaseIntent.Worker.Workflows;
@@ -19,15 +20,34 @@ public class PurchaseIntentWorkflow
     {
         Workflow.Logger.LogInformation("Purchase intent created: {Id}", input.PurchaseIntentId);
 
-        var finished = await Workflow.WaitConditionAsync(
+        // Phase 1: wait up to 1 hour; if idle with an email, send a recovery nudge.
+        var phase1Done = await Workflow.WaitConditionAsync(
             () => _status is PurchaseIntentStatus.CheckoutCompleted
                 or PurchaseIntentStatus.CheckoutFailed
                 or PurchaseIntentStatus.Abandoned,
-            timeout: TimeSpan.FromDays(30));
+            timeout: TimeSpan.FromHours(1));
 
-        if (!finished && _status == PurchaseIntentStatus.Active)
+        if (!phase1Done && _email is { } recoveryEmail)
         {
-            _status = PurchaseIntentStatus.Abandoned;
+            Workflow.Logger.LogInformation("Sending recovery email for purchase intent {Id}", input.PurchaseIntentId);
+            await Workflow.ExecuteActivityAsync(
+                (RecoveryEmailActivities a) => a.SendRecoveryEmailAsync(recoveryEmail, input.PurchaseIntentId),
+                new ActivityOptions { StartToCloseTimeout = TimeSpan.FromMinutes(2) });
+        }
+
+        // Phase 2: continue waiting up to 30 days total.
+        if (!phase1Done)
+        {
+            var phase2Done = await Workflow.WaitConditionAsync(
+                () => _status is PurchaseIntentStatus.CheckoutCompleted
+                    or PurchaseIntentStatus.CheckoutFailed
+                    or PurchaseIntentStatus.Abandoned,
+                timeout: TimeSpan.FromDays(30) - TimeSpan.FromHours(1));
+
+            if (!phase2Done && _status == PurchaseIntentStatus.Active)
+            {
+                _status = PurchaseIntentStatus.Abandoned;
+            }
         }
 
         Workflow.Logger.LogInformation(

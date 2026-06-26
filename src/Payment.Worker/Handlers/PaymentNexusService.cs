@@ -22,7 +22,7 @@ public class PaymentNexusService
                     "Payment declined by simulated processor.");
             }
 
-            var authCode = $"AUTH-{Guid.NewGuid():N8}";
+            var authCode = $"AUTH-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
             return new AuthorizePaymentOutput(true, authCode, null);
         });
 }

@@ -94,9 +94,7 @@ public static class PurchaseIntentEndpoints
             var verificationId = $"email-verify-{id}";
             var token = Guid.NewGuid().ToString("N");
 
-            try
-            {
-                await temporal.StartWorkflowAsync(
+            await temporal.StartWorkflowAsync(
                     (EmailVerificationWorkflow workflow) => workflow.RunAsync(
                         new EmailVerificationStart(verificationId, id, command.Email, token)),
                     new WorkflowOptions
@@ -105,10 +103,6 @@ public static class PurchaseIntentEndpoints
                         TaskQueue = "checkout-queue",
                         IdConflictPolicy = WorkflowIdConflictPolicy.TerminateExisting
                     });
-            }
-            catch
-            {
-            }
 
             return Results.Ok(new { verificationId });
         });

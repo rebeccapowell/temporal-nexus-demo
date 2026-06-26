@@ -10,7 +10,7 @@ public class FulfillmentNexusService
     public IOperationHandler<RequestFulfillmentInput, RequestFulfillmentOutput> RequestFulfillment() =>
         OperationHandler.Sync<RequestFulfillmentInput, RequestFulfillmentOutput>((_, input) =>
         {
-            var trackingNumber = $"TRK-{Guid.NewGuid():N8}";
+            var trackingNumber = $"TRK-{Guid.NewGuid().ToString("N")[..8].ToUpper()}";
             return new RequestFulfillmentOutput(true, trackingNumber, null);
         });
 }

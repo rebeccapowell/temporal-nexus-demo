@@ -30,6 +30,7 @@ export const CheckoutStatusLabel: Record<number, string> = {
   4: 'Completed',
   5: 'Failed',
   6: 'Cancelled',
+  7: 'Payment Declined — awaiting retry',
 };
 
 const json = async <T>(res: Response): Promise<T> => {

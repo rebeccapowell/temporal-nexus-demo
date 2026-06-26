@@ -32,7 +32,8 @@ public enum CheckoutStatus
     ProcessingFulfillment,
     Completed,
     Failed,
-    Cancelled
+    Cancelled,
+    PaymentDeclined
 }
 
 public record CheckoutState(

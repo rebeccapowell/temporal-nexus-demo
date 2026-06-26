@@ -49,6 +49,24 @@ public class CheckoutActivities(IConfiguration configuration, ITemporalClient te
     }
 
     [Activity]
+    public async Task NotifyPurchaseIntentCheckoutCompletedAsync(string purchaseIntentId, string checkoutId)
+    {
+        var handle = temporalClient.GetWorkflowHandle($"purchase-intent-{purchaseIntentId}");
+        await handle.SignalAsync("CheckoutCompletedAsync", new[] { (object)checkoutId });
+        ActivityExecutionContext.Current.Logger.LogInformation(
+            "Checkout completed signal sent to purchase intent {Id}", purchaseIntentId);
+    }
+
+    [Activity]
+    public async Task NotifyPurchaseIntentCheckoutFailedAsync(string purchaseIntentId, string checkoutId, string reason)
+    {
+        var handle = temporalClient.GetWorkflowHandle($"purchase-intent-{purchaseIntentId}");
+        await handle.SignalAsync("CheckoutFailedAsync", new object[] { checkoutId, reason });
+        ActivityExecutionContext.Current.Logger.LogInformation(
+            "Checkout failed signal sent to purchase intent {Id}", purchaseIntentId);
+    }
+
+    [Activity]
     public async Task SendConfirmationEmailAsync(string email, string checkoutId, string trackingNumber)
     {
         var message = new MimeMessage();
