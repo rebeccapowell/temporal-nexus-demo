@@ -51,7 +51,7 @@ builder.AddProject<Projects.Fulfillment_Worker>("fulfillment-worker")
 
 builder.AddNpmApp("storefront-ui", @"..\Storefront.Ui", "dev", ["--", "--host", "0.0.0.0", "--port", "5173"])
     .WithEnvironment("VITE_API_URL", api.GetEndpoint("http"))
-    .WithHttpEndpoint(targetPort: 5173, port: 5173, name: "http")
+    .WithHttpEndpoint(targetPort: 5173, name: "http")
     .WithExternalHttpEndpoints()
     .WaitFor(api);
 
