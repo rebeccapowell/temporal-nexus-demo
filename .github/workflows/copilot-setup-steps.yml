@@ -1,0 +1,70 @@
+name: Copilot Setup Steps
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Aspire CLI
+        run: |
+          dotnet tool update --global Aspire.Cli --prerelease || \
+          dotnet tool install --global Aspire.Cli --prerelease
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+
+      - name: Install Squad CLI
+        run: npm install --global @bradygaster/squad-cli
+
+      - name: Initialise Aspire agent skills
+        # Installs Aspire skills into all agent skill locations (.agents/skills,
+        # .claude/skills, .github/skills, .opencode/skill, etc.).
+        # Playwright CLI provenance can fail in CI; the skills themselves still
+        # install successfully, so we tolerate that exit code.
+        run: |
+          aspire agent init --skills all --skill-locations all --non-interactive --nologo || \
+            echo "aspire agent init completed (Playwright attestation warning is expected in CI)"
+
+      - name: Install Temporal developer skill
+        # npx skills add is interactive; re-run non-interactively by syncing
+        # from the committed skills-lock.json.
+        run: npx --yes skills@latest sync 2>/dev/null || true
+
+      - name: Install Superpowers for GitHub Copilot CLI
+        # copilot plugin commands require the Copilot CLI which is available
+        # inside the cloud-agent environment but may not be present in CI runners.
+        run: |
+          if command -v copilot &>/dev/null; then
+            copilot plugin marketplace add obra/superpowers-marketplace
+            copilot plugin install superpowers@superpowers-marketplace
+          else
+            echo "Copilot CLI not available; superpowers plugin will be configured on first agent run"
+          fi
+
+      - name: Verify installed CLIs
+        run: |
+          set -euo pipefail
+          aspire --version
+          squad --version
