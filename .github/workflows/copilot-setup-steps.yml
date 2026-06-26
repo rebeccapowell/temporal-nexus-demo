@@ -48,12 +48,9 @@ jobs:
             local target_dir="$2"
 
             if [ -d "$target_dir/.git" ]; then
-              git -C "$target_dir" fetch --all --prune
-              git -C "$target_dir" reset --hard origin/HEAD
-            else
               rm -rf "$target_dir"
-              git clone --depth 1 "$repo_url" "$target_dir"
             fi
+            git clone --depth 1 "$repo_url" "$target_dir"
           }
 
           clone_or_update "https://github.com/temporalio/skill-temporal-developer" ".agents/skills/temporal-developer"
