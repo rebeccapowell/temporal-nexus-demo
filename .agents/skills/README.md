@@ -11,4 +11,4 @@ Configured upstream sources:
 
 The Copilot setup workflow installs and refreshes these sources for cloud-agent sessions.
 
-Resource index: https://awesome-copilot.github.com/
+Resource index: https://awesome-copilot.github.io/
