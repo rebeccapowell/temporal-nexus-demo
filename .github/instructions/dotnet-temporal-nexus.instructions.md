@@ -1,6 +1,6 @@
 ---
 description: Build guidance for the Temporal Nexus + Aspire .NET 10 demo.
-applyTo: "**/*.cs,**/*.csproj,**/*.sln,**/*.props,**/*.targets,**/*.json"
+applyTo: "**/*.{cs,csproj,sln,props,targets,json}"
 ---
 
 # .NET + Temporal Nexus guidance
