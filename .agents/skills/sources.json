@@ -1,0 +1,30 @@
+{
+  "skillsDirectory": ".agents/skills",
+  "sources": [
+    {
+      "name": "temporal-developer",
+      "repo": "https://github.com/temporalio/skill-temporal-developer",
+      "target": ".agents/skills/temporal-developer"
+    },
+    {
+      "name": "aspire-skills",
+      "repo": "https://github.com/microsoft/aspire-skills",
+      "target": ".agents/skills/aspire-skills"
+    },
+    {
+      "name": "awesome-copilot",
+      "repo": "https://github.com/github/awesome-copilot",
+      "target": ".agents/skills/awesome-copilot"
+    },
+    {
+      "name": "squad",
+      "repo": "https://github.com/bradygaster/squad",
+      "target": ".agents/skills/squad"
+    },
+    {
+      "name": "superpowers",
+      "repo": "https://github.com/obra/superpowers",
+      "target": ".agents/skills/superpowers"
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+name: Copilot Setup Steps
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+  pull_request:
+    paths:
+      - .github/workflows/copilot-setup-steps.yml
+
+jobs:
+  copilot-setup-steps:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install Aspire CLI
+        run: |
+          dotnet tool update --global Aspire.Cli --prerelease || \
+          dotnet tool install --global Aspire.Cli --prerelease
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+
+      - name: Install Squad CLI
+        run: npm install --global @bradygaster/squad-cli
+
+      - name: Install skill sources into .agents/skills
+        run: |
+          set -euo pipefail
+          mkdir -p .agents/skills
+
+          clone_or_update() {
+            local repo_url="$1"
+            local target_dir="$2"
+
+            if [ -d "$target_dir/.git" ]; then
+              git -C "$target_dir" fetch --all --prune
+              git -C "$target_dir" reset --hard origin/HEAD
+            else
+              rm -rf "$target_dir"
+              git clone --depth 1 "$repo_url" "$target_dir"
+            fi
+          }
+
+          clone_or_update "https://github.com/temporalio/skill-temporal-developer" ".agents/skills/temporal-developer"
+          clone_or_update "https://github.com/microsoft/aspire-skills" ".agents/skills/aspire-skills"
+          clone_or_update "https://github.com/github/awesome-copilot" ".agents/skills/awesome-copilot"
+          clone_or_update "https://github.com/bradygaster/squad" ".agents/skills/squad"
+          clone_or_update "https://github.com/obra/superpowers" ".agents/skills/superpowers"
+
+      - name: Verify installed CLIs
+        run: |
+          set -euo pipefail
+          aspire --version
+          squad --version
