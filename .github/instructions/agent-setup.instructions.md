@@ -1,6 +1,6 @@
 ---
 description: Repository setup and AI agent ergonomics for this project.
-applyTo: "AGENTS.MD,.github/workflows/copilot-setup-steps.yml,.agents/**/*.md,.agents/**/*.json"
+applyTo: "{AGENTS.MD,.github/workflows/copilot-setup-steps.yml,.agents/**/*.md,.agents/**/*.json}"
 ---
 
 # Agent setup rules
