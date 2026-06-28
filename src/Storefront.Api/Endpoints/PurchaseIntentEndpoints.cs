@@ -146,8 +146,24 @@ public static class PurchaseIntentEndpoints
 
             if (piState.EmailVerified)
             {
+                // Email was verified before checkout started — unblock checkout immediately.
                 var checkoutHandle = temporal.GetWorkflowHandle<CheckoutWorkflow>(checkoutId);
                 await checkoutHandle.SignalAsync(workflow => workflow.EmailVerifiedAsync());
+            }
+            else
+            {
+                // Email not yet verified — register this checkout with the still-running
+                // EmailVerificationWorkflow so it can forward the signal when the user clicks
+                // the verification link.
+                try
+                {
+                    var verifyHandle = temporal.GetWorkflowHandle<EmailVerificationWorkflow>($"email-verify-{id}");
+                    await verifyHandle.SignalAsync(wf => wf.RegisterCheckoutAsync(checkoutId));
+                }
+                catch
+                {
+                    // Verification workflow already completed or never started — not an error.
+                }
             }
 
             return Results.Ok(new { checkoutId });
