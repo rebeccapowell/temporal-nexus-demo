@@ -42,7 +42,7 @@ public class CheckoutActivities(IConfiguration configuration, ITemporalClient te
     public async Task NotifyEmailVerifiedAsync(string purchaseIntentId)
     {
         var handle = temporalClient.GetWorkflowHandle($"purchase-intent-{purchaseIntentId}");
-        await handle.SignalAsync("EmailVerifiedAsync", Array.Empty<object>());
+        await handle.SignalAsync("EmailVerified", Array.Empty<object>());
         ActivityExecutionContext.Current.Logger.LogInformation(
             "Email verified signal sent to purchase intent {Id}",
             purchaseIntentId);
@@ -52,7 +52,7 @@ public class CheckoutActivities(IConfiguration configuration, ITemporalClient te
     public async Task NotifyPurchaseIntentCheckoutCompletedAsync(string purchaseIntentId, string checkoutId)
     {
         var handle = temporalClient.GetWorkflowHandle($"purchase-intent-{purchaseIntentId}");
-        await handle.SignalAsync("CheckoutCompletedAsync", new[] { (object)checkoutId });
+        await handle.SignalAsync("CheckoutCompleted", new[] { (object)checkoutId });
         ActivityExecutionContext.Current.Logger.LogInformation(
             "Checkout completed signal sent to purchase intent {Id}", purchaseIntentId);
     }
@@ -61,7 +61,7 @@ public class CheckoutActivities(IConfiguration configuration, ITemporalClient te
     public async Task NotifyPurchaseIntentCheckoutFailedAsync(string purchaseIntentId, string checkoutId, string reason)
     {
         var handle = temporalClient.GetWorkflowHandle($"purchase-intent-{purchaseIntentId}");
-        await handle.SignalAsync("CheckoutFailedAsync", new object[] { checkoutId, reason });
+        await handle.SignalAsync("CheckoutFailed", new object[] { checkoutId, reason });
         ActivityExecutionContext.Current.Logger.LogInformation(
             "Checkout failed signal sent to purchase intent {Id}", purchaseIntentId);
     }
