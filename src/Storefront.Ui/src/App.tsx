@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { api, CheckoutStatusLabel, type CheckoutState, type Product, type PurchaseIntentState } from './api';
+import { Button } from './components/ui/button';
+import { Card, CardContent, CardHeader } from './components/ui/card';
+import { Input } from './components/ui/input';
 
 // CheckoutStatus enum values mirrored from the server contract
 const CHECKOUT_STATUS_PAYMENT_DECLINED = 7;
@@ -61,19 +64,11 @@ export default function App() {
       <header className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold m-0">⚡ Temporal Nexus Demo Shop</h1>
         <div className="flex gap-2">
-          <button
-            onClick={handle(() => api.newCleanCustomer())}
-            className="px-3 py-1.5 rounded border border-gray-300 bg-white text-sm hover:bg-gray-50 cursor-pointer"
-          >
+          <Button variant="outline" size="sm" onClick={handle(() => api.newCleanCustomer())}>
             New Customer
-          </button>
-          <a
-            href="http://localhost:8025"
-            target="_blank"
-            rel="noreferrer"
-            className="px-3 py-1.5 rounded border border-gray-300 bg-white text-sm hover:bg-gray-50"
-          >
-            📧 MailPit
+          </Button>
+          <a href="http://localhost:8025" target="_blank" rel="noreferrer">
+            <Button variant="outline" size="sm" type="button">📧 MailPit</Button>
           </a>
         </div>
       </header>
@@ -91,17 +86,19 @@ export default function App() {
           <h2 className="text-xl font-semibold mb-3">Products</h2>
           <div className="grid grid-cols-2 gap-4">
             {products.map((product) => (
-              <div key={product.sku} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
-                <strong className="block text-sm font-semibold">{product.name}</strong>
-                <p className="text-gray-500 text-xs mt-1">{product.description}</p>
-                <p className="font-bold mt-2">${product.price.toFixed(2)}</p>
-                <button
-                  onClick={handle(() => api.addItem(product.sku, 1))}
-                  className="mt-3 w-full bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium px-4 py-2 rounded-md cursor-pointer"
-                >
-                  Add to Basket
-                </button>
-              </div>
+              <Card key={product.sku}>
+                <CardContent className="pt-4">
+                  <strong className="block text-sm font-semibold">{product.name}</strong>
+                  <p className="text-gray-500 text-xs mt-1">{product.description}</p>
+                  <p className="font-bold mt-2">${product.price.toFixed(2)}</p>
+                  <Button
+                    className="mt-3 w-full"
+                    onClick={handle(() => api.addItem(product.sku, 1))}
+                  >
+                    Add to Basket
+                  </Button>
+                </CardContent>
+              </Card>
             ))}
           </div>
         </div>
@@ -120,12 +117,14 @@ export default function App() {
                 <div key={item.sku} className="flex justify-between items-center mb-2 gap-2 text-sm">
                   <span>{item.name} ×{item.quantity}</span>
                   <span className="text-gray-600">${(item.unitPrice * item.quantity).toFixed(2)}</span>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={handle(() => api.removeItem(item.sku))}
-                    className="text-red-500 bg-transparent border-none cursor-pointer p-0"
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
                   >
                     ✕
-                  </button>
+                  </Button>
                 </div>
               ))}
               <p className="font-bold border-t border-gray-200 pt-2 mt-2">Total: ${total.toFixed(2)}</p>
@@ -142,21 +141,20 @@ export default function App() {
             </p>
           ) : (
             <div className="flex gap-2">
-              <input
+              <Input
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="your@email.com"
-                className="flex-1 border border-gray-300 rounded-md px-2.5 py-1.5 text-sm"
               />
-              <button
+              <Button
+                size="sm"
                 onClick={handle(async () => {
                   await api.provideEmail(email);
                   setEmailSent(true);
                 })}
-                className="bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium px-3 py-1.5 rounded-md cursor-pointer"
               >
                 Verify
-              </button>
+              </Button>
             </div>
           )}
           {emailSent && !pi?.emailVerified && (
@@ -164,83 +162,93 @@ export default function App() {
           )}
 
           {!pi?.checkoutId && (
-            <button
+            <Button
+              variant="success"
+              size="lg"
+              className="w-full mt-4"
               onClick={handle(() => api.startCheckout())}
-              className="w-full mt-4 bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-4 py-2.5 rounded-lg cursor-pointer"
             >
               Start Checkout
-            </button>
+            </Button>
           )}
 
           {checkout && (
-            <div className="mt-4 border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
-              <h3 className="text-base font-semibold mb-2">
-                Checkout:{' '}
-                <span className={checkout.status === CHECKOUT_STATUS_COMPLETED ? 'text-green-600' : checkout.status >= CHECKOUT_STATUS_FAILED ? 'text-red-600' : 'text-blue-600'}>
-                  {CheckoutStatusLabel[checkout.status] ?? `Status ${checkout.status}`}
-                </span>
-              </h3>
-              {checkout.failureReason && (
-                <p className="text-red-600 text-sm mb-2">{checkout.failureReason}</p>
-              )}
+            <Card className="mt-4">
+              <CardHeader className="pb-2">
+                <h3 className="text-base font-semibold">
+                  Checkout:{' '}
+                  <span className={checkout.status === CHECKOUT_STATUS_COMPLETED ? 'text-green-600' : checkout.status >= CHECKOUT_STATUS_FAILED ? 'text-red-600' : 'text-blue-600'}>
+                    {CheckoutStatusLabel[checkout.status] ?? `Status ${checkout.status}`}
+                  </span>
+                </h3>
+                {checkout.failureReason && (
+                  <p className="text-red-600 text-sm">{checkout.failureReason}</p>
+                )}
+              </CardHeader>
+              <CardContent>
+                {!checkout.shippingAddress && checkout.status === 0 && (
+                  <div>
+                    <h4 className="text-sm font-semibold mb-2">Shipping Address</h4>
+                    {(['fullName', 'line1', 'city', 'postalCode'] as const).map((field) => (
+                      <Input
+                        key={field}
+                        className="mb-1.5"
+                        value={shippingForm[field]}
+                        onChange={(e) => setShippingForm((s) => ({ ...s, [field]: e.target.value }))}
+                        placeholder={{ fullName: 'Full Name', line1: 'Address Line 1', city: 'City', postalCode: 'Postal Code' }[field]}
+                      />
+                    ))}
+                    <Button
+                      size="sm"
+                      className="mt-1"
+                      onClick={handle(() => api.provideShipping(checkout.checkoutId, { ...shippingForm }))}
+                    >
+                      Save Address
+                    </Button>
+                  </div>
+                )}
 
-              {!checkout.shippingAddress && checkout.status === 0 && (
-                <div>
-                  <h4 className="text-sm font-semibold mb-1">Shipping Address</h4>
-                  {['fullName', 'line1', 'city', 'postalCode'].map((field) => (
-                    <input
-                      key={field}
-                      value={shippingForm[field as keyof typeof shippingForm]}
-                      onChange={(e) => setShippingForm((s) => ({ ...s, [field]: e.target.value }))}
-                      placeholder={{ fullName: 'Full Name', line1: 'Address Line 1', city: 'City', postalCode: 'Postal Code' }[field]}
-                      className="block w-full mb-1.5 border border-gray-300 rounded px-2 py-1.5 text-sm"
+                {!checkout.payment && checkout.status === 0 && (
+                  <div className="mt-3">
+                    <h4 className="text-sm font-semibold mb-2">Payment</h4>
+                    <Input
+                      className="mb-1.5"
+                      value={paymentForm.cardHolder}
+                      onChange={(e) => setPaymentForm((p) => ({ ...p, cardHolder: e.target.value }))}
+                      placeholder="Cardholder name"
                     />
-                  ))}
-                  <button
-                    onClick={handle(() => api.provideShipping(checkout.checkoutId, { ...shippingForm }))}
-                    className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-3 py-1.5 rounded cursor-pointer"
-                  >
-                    Save Address
-                  </button>
+                    <Button
+                      size="sm"
+                      className="mt-1"
+                      onClick={handle(() => api.providePayment(checkout.checkoutId, { ...paymentForm }))}
+                    >
+                      Save Payment
+                    </Button>
+                  </div>
+                )}
+
+                <div className="flex gap-2 mt-3 flex-wrap">
+                  {checkout.status === CHECKOUT_STATUS_PAYMENT_DECLINED && (
+                    <Button
+                      variant="warning"
+                      size="sm"
+                      onClick={handle(() => api.retryPayment(checkout.checkoutId))}
+                    >
+                      Retry Payment
+                    </Button>
+                  )}
+                  {canCancelCheckout(checkout.status) && (
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handle(() => api.cancelCheckout(checkout.checkoutId))}
+                    >
+                      Cancel
+                    </Button>
+                  )}
                 </div>
-              )}
-
-              {!checkout.payment && checkout.status === 0 && (
-                <div className="mt-3">
-                  <h4 className="text-sm font-semibold mb-1">Payment</h4>
-                  <input
-                    value={paymentForm.cardHolder}
-                    onChange={(e) => setPaymentForm((p) => ({ ...p, cardHolder: e.target.value }))}
-                    placeholder="Cardholder name"
-                    className="block w-full mb-1.5 border border-gray-300 rounded px-2 py-1.5 text-sm"
-                  />
-                  <button
-                    onClick={handle(() => api.providePayment(checkout.checkoutId, { ...paymentForm }))}
-                    className="bg-blue-500 hover:bg-blue-600 text-white text-sm px-3 py-1.5 rounded cursor-pointer"
-                  >
-                    Save Payment
-                  </button>
-                </div>
-              )}
-
-              {checkout.status === CHECKOUT_STATUS_PAYMENT_DECLINED && (
-                <button
-                  onClick={handle(() => api.retryPayment(checkout.checkoutId))}
-                  className="mt-2 bg-amber-500 hover:bg-amber-600 text-white text-sm px-3 py-1.5 rounded cursor-pointer"
-                >
-                  Retry Payment
-                </button>
-              )}
-
-              {canCancelCheckout(checkout.status) && (
-                <button
-                  onClick={handle(() => api.cancelCheckout(checkout.checkoutId))}
-                  className="mt-2 ml-2 bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1.5 rounded cursor-pointer"
-                >
-                  Cancel
-                </button>
-              )}
-            </div>
+              </CardContent>
+            </Card>
           )}
         </div>
       </div>

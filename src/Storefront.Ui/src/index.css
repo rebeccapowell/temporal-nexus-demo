@@ -1,4 +1,12 @@
 @import "tailwindcss";
 
+:root {
+  --background: 0 0% 98%;
+  --foreground: 222 47% 11%;
+  --card: 0 0% 100%;
+  --border: 214 32% 91%;
+  --ring: 221 83% 53%;
+}
+
 *, *::before, *::after { box-sizing: border-box; }
 body { margin: 0; }
