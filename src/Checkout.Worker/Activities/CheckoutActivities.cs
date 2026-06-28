@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using MimeKit;
+using ShoppingBasket.Contracts;
 using Temporalio.Activities;
 using Temporalio.Client;
 
@@ -41,11 +42,31 @@ public class CheckoutActivities(IConfiguration configuration, ITemporalClient te
     [Activity]
     public async Task NotifyEmailVerifiedAsync(string purchaseIntentId)
     {
-        var handle = temporalClient.GetWorkflowHandle($"purchase-intent-{purchaseIntentId}");
-        await handle.SignalAsync("EmailVerified", Array.Empty<object>());
+        var piHandle = temporalClient.GetWorkflowHandle($"purchase-intent-{purchaseIntentId}");
+        await piHandle.SignalAsync("EmailVerified", Array.Empty<object>());
+
+        // If a checkout is already waiting for email verification, unblock it too.
+        try
+        {
+            var piState = await piHandle.QueryAsync<PurchaseIntentState>(
+                "GetPurchaseIntent", new object?[] { purchaseIntentId });
+            if (piState?.CheckoutId is { } checkoutId)
+            {
+                var checkoutHandle = temporalClient.GetWorkflowHandle(checkoutId);
+                await checkoutHandle.SignalAsync("EmailVerified", Array.Empty<object>());
+                ActivityExecutionContext.Current.Logger.LogInformation(
+                    "Email verified signal forwarded to checkout {Id}", checkoutId);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Non-fatal: checkout may not exist or may already be past the wait condition.
+            ActivityExecutionContext.Current.Logger.LogDebug(
+                "Could not forward email-verified to checkout: {Msg}", ex.Message);
+        }
+
         ActivityExecutionContext.Current.Logger.LogInformation(
-            "Email verified signal sent to purchase intent {Id}",
-            purchaseIntentId);
+            "Email verified signal sent to purchase intent {Id}", purchaseIntentId);
     }
 
     [Activity]

@@ -10,11 +10,14 @@ namespace Checkout.Worker.Workflows;
 public class EmailVerificationWorkflow
 {
     private bool _verified;
+    private string? _expectedToken;
 
     [WorkflowRun]
     public async Task RunAsync(EmailVerificationStart input)
     {
         Workflow.Logger.LogInformation("Email verification started for purchase intent {Id}", input.PurchaseIntentId);
+
+        _expectedToken = input.VerificationToken;
 
         await Workflow.ExecuteActivityAsync(
             (CheckoutActivities activities) =>
@@ -38,8 +41,15 @@ public class EmailVerificationWorkflow
     [WorkflowSignal]
     public Task VerifyAsync(string token)
     {
-        _verified = true;
-        Workflow.Logger.LogInformation("Verification token received");
+        if (token == _expectedToken)
+        {
+            _verified = true;
+            Workflow.Logger.LogInformation("Verification token accepted");
+        }
+        else
+        {
+            Workflow.Logger.LogWarning("Verification token rejected — mismatch");
+        }
         return Task.CompletedTask;
     }
 }

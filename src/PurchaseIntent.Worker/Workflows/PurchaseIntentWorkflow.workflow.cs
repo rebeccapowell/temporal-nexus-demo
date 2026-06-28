@@ -27,7 +27,7 @@ public class PurchaseIntentWorkflow
                 or PurchaseIntentStatus.Abandoned,
             timeout: TimeSpan.FromHours(1));
 
-        if (!phase1Done && _email is { } recoveryEmail)
+        if (!phase1Done && _email is { } recoveryEmail && _status == PurchaseIntentStatus.Active)
         {
             Workflow.Logger.LogInformation("Sending recovery email for purchase intent {Id}", input.PurchaseIntentId);
             await Workflow.ExecuteActivityAsync(
@@ -114,6 +114,16 @@ public class PurchaseIntentWorkflow
         _email = command.Email;
         Workflow.Logger.LogInformation("Email provided for purchase intent (not logged)");
         return Task.CompletedTask;
+    }
+
+    [WorkflowUpdateValidator(nameof(StartCheckoutAsync))]
+    public void ValidateStartCheckout(string checkoutId)
+    {
+        if (_status == PurchaseIntentStatus.CheckoutStarted)
+        {
+            throw new InvalidOperationException(
+                $"A checkout ({_checkoutId}) is already in progress for this purchase intent.");
+        }
     }
 
     [WorkflowUpdate]

@@ -126,6 +126,11 @@ public static class PurchaseIntentEndpoints
                 return Results.BadRequest(new { error = "Email is required." });
             }
 
+            if (piState.CheckoutId is not null && piState.Status == PurchaseIntentStatus.CheckoutStarted)
+            {
+                return Results.Conflict(new { error = "A checkout is already in progress.", checkoutId = piState.CheckoutId });
+            }
+
             var checkoutId = $"checkout-{Guid.NewGuid():N}";
 
             await temporal.StartWorkflowAsync(
